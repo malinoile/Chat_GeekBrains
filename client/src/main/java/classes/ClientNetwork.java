@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 
 public class ClientNetwork {
     private Socket socket;
@@ -51,18 +52,34 @@ public class ClientNetwork {
                         }
                     }
 
-                    while (isChatting) {
-                        message = in.readUTF();
-                        if (message.equalsIgnoreCase("@end")) {
-                            isChatting = false;
-                        } else if (message.startsWith("@clients ")) {
-                            callOnChangeClientList.callback(message.substring(9));
-                        } else if (message.startsWith("@change ")) {
-                            user = message.split("\\s", 2)[1];
-                        } else if (message.startsWith("@error ")) {
-                            callOnError.callback(message.split("\\s", 2)[1]);
-                        } else {
-                            callOnMessageReceived.callback(message);
+                    if(isAuthorize && isChatting) {
+                        try(HistoryManager historyManager = new HistoryManager(user)) {
+
+                            List<String> oldMessages = historyManager.readFromFile();
+                            if(oldMessages.size() > 0) {
+                                for(String oldMessage : oldMessages) {
+                                    callOnMessageReceived.callback(oldMessage);
+                                }
+                            }
+
+                            while (isChatting) {
+                                message = in.readUTF();
+                                if (message.equalsIgnoreCase("@end")) {
+                                    isChatting = false;
+                                } else if (message.startsWith("@clients ")) {
+                                    callOnChangeClientList.callback(message.substring(9));
+                                } else if (message.startsWith("@change ")) {
+                                    user = message.split("\\s", 2)[1];
+                                    historyManager.updateFilename(user);
+                                } else if (message.startsWith("@error ")) {
+                                    callOnError.callback(message.split("\\s", 2)[1]);
+                                } else {
+                                    callOnMessageReceived.callback(message);
+                                    historyManager.writeToFile(message);
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
                 } catch (IOException e) {
