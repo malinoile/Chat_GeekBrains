@@ -4,6 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ClientHandler {
 
@@ -20,7 +22,8 @@ public class ClientHandler {
             this.in = new DataInputStream(socket.getInputStream());
             this.out = new DataOutputStream(socket.getOutputStream());
 
-            new Thread(() -> {
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.submit(() -> {
                 boolean isChatting = true;
                 String msg = null;
                 boolean isAuthorize = false;
@@ -73,7 +76,8 @@ public class ClientHandler {
                 } finally {
                     disconnect();
                 }
-            }).start();
+            });
+            executorService.shutdown();
         } catch (IOException e) {
             e.printStackTrace();
         }
