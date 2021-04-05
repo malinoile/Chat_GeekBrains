@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class ClientHandler {
 
@@ -14,6 +17,8 @@ public class ClientHandler {
     private Socket socket;
     private DataInputStream in;
     private DataOutputStream out;
+
+    private static final Logger logger = LogManager.getLogManager().getLogger(DBHelper.class.getName());
 
     public ClientHandler(Server server, Socket socket) {
         try {
@@ -72,6 +77,7 @@ public class ClientHandler {
                         }
                     }
                 } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Ошибка при чтении сообщений с сервера/отправке сообщений на сервер");
                     e.printStackTrace();
                 } finally {
                     disconnect();
@@ -79,6 +85,7 @@ public class ClientHandler {
             });
             executorService.shutdown();
         } catch (IOException e) {
+            logger.log(Level.SEVERE, "Ошибка в инициализации потока ввода/вывода");
             e.printStackTrace();
         }
     }
@@ -89,6 +96,7 @@ public class ClientHandler {
         try {
             out.writeUTF(message);
         } catch (IOException e) {
+            logger.log(Level.SEVERE, "Ошибка при отправке сообщения на сервер");
             e.printStackTrace();
         }
     }
@@ -102,16 +110,19 @@ public class ClientHandler {
         try {
             in.close();
         } catch (IOException e) {
+            logger.log(Level.SEVERE, "Ошибка при закрытии потока записи");
             e.printStackTrace();
         }
         try {
             out.close();
         } catch (IOException e) {
+            logger.log(Level.SEVERE, "Ошибка при закрытии потока чтения");
             e.printStackTrace();
         }
         try {
             socket.close();
         } catch (IOException e) {
+            logger.log(Level.SEVERE, "Ошибка при закрытии сокета");
             e.printStackTrace();
         }
     }

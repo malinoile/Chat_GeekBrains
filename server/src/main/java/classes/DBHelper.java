@@ -1,11 +1,16 @@
 package classes;
 
 import java.sql.*;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class DBHelper implements AutoCloseable{
 
     private static DBHelper instance;
     private static Connection connection;
+
+    private static final Logger logger = LogManager.getLogManager().getLogger(DBHelper.class.getName());
 
     private static PreparedStatement selectStatement;
     private static PreparedStatement updateStatement;
@@ -18,6 +23,7 @@ public class DBHelper implements AutoCloseable{
             initPreparedStatements();
 
             instance = new DBHelper();
+            logger.log(Level.CONFIG, "Создан экземпляр класса DBHelper");
         }
 
         return instance;
@@ -28,7 +34,7 @@ public class DBHelper implements AutoCloseable{
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection("jdbc:sqlite:database.db");
         } catch (ClassNotFoundException | SQLException e) {
-            System.err.println("Возникла ошибка при подключении");
+            logger.log(Level.SEVERE, "Не удалось подключиться к базе данных");
             e.printStackTrace();
         }
     }
@@ -39,7 +45,7 @@ public class DBHelper implements AutoCloseable{
                     "WHERE LOWER(username) = LOWER(?) AND password = ?");
             updateStatement = connection.prepareStatement("UPDATE users SET username = LOWER(?) WHERE LOWER(username) = LOWER(?)");
         } catch (SQLException e) {
-            System.err.println("Ошибка при инициализации PreparedStatements");
+            logger.log(Level.SEVERE, "Ошибка при инициализации PreparedStatements");
             e.printStackTrace();
         }
     }
@@ -53,6 +59,7 @@ public class DBHelper implements AutoCloseable{
                 return resultSet.getString("username");
             }
         } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Возникла ошибка при авторизации пользователя");
             e.printStackTrace();
         }
 
@@ -65,6 +72,7 @@ public class DBHelper implements AutoCloseable{
             updateStatement.setString(2, oldUsername);
             return updateStatement.executeUpdate();
         } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Возникла ошибка при изменение имени пользователя");
             e.printStackTrace();
         }
 
